@@ -13,10 +13,10 @@ import java.util.*;
  *
  * @author gabri
  */
-public class MinMaxCpu extends GamePlayer {
+public class MiniMaxPlayer extends GamePlayer {
     private Point best_move;
     
-    public MinMaxCpu (int mark, int depth){
+    public MiniMaxPlayer (int mark, int depth){
         super(mark, depth);
         best_move=null;
     }

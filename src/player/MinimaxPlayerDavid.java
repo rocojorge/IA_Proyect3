@@ -10,9 +10,9 @@ import java.util.ArrayList;
  * @author Cristian Ojeda del Moral
  * Jugador de Othello desarrollado implementando un algoritmo minimax restringido
  */
-public class MinimaxPlayer extends GamePlayer {
+public class MinimaxPlayerDavid extends GamePlayer {
 
-    public MinimaxPlayer(int mark, int depth) {
+    public MinimaxPlayerDavid(int mark, int depth) {
         super(mark, depth);
     }
 
