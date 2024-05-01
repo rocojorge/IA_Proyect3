@@ -116,9 +116,7 @@ public class MiniMaxPlayer extends GamePlayer {
            for (int i=0;i<hijos.size()-1;i++){
                valor = Math.min(valor, min_max(nodo,depth-1,true));               
            }
-           return valor;
-           
-           
+           return valor;   
        }
        
    }
