@@ -8,11 +8,50 @@ import game.*;
 
 import java.awt.*;
 import java.util.*;
+import java.math.*;
 
 /**
  *
  * @author gabri
  */
+
+class Node {
+    protected int[][] board;
+    protected int jugador;
+    protected boolean finAl;
+
+    public Node(int[][] board, int playerToMove) {
+        this.board = board;
+        this.jugador = playerToMove;
+        if (BoardHelper.isGameFinished(board))this.finAl=true;
+        else this.finAl=false;
+       
+    }
+    /**
+     * Funcion generadora de nodos hijos
+     * @return Lista de nodos hijos
+     */
+    public ArrayList<Node> generateChildren() {
+        ArrayList<Node> children = new ArrayList<>();
+        for (Point move : BoardHelper.getAllPossibleMoves(board, jugador)) {
+            int[][] newBoard = BoardHelper.getNewBoardAfterMove(board, move, jugador);
+            children.add(new Node(newBoard, 3 - jugador)); // Cambio de jugador
+        }
+        return children;
+    }
+    /**
+     * Funcion que devuelve el estado de la partida
+     * @return Estado de la partida
+     */
+    public boolean isfinal(){
+        return this.finAl;
+    }
+    
+    public int evaluacion(int jugador_){
+        int fichas = BoardHelper.getPlayerStoneCount(board, jugador_);
+        return fichas;
+    }
+}
 public class MiniMaxPlayer extends GamePlayer {
     private Point best_move;
     
@@ -37,43 +76,52 @@ public class MiniMaxPlayer extends GamePlayer {
     @Override
     public Point play(int[][] board) {
         ArrayList<Point> myPossibleMoves = BoardHelper.getAllPossibleMoves(board,myMark);
-       //int mis_puntos=BoardHelper.getPlayerStoneCount(board, myMark);
+        Node Primero = new Node(board,myMark);
+        int num_move=0;
+        int valor=-9999;
+        
 
         if(myPossibleMoves.size() > 0){
-            return Min_Max(myPossibleMoves,board, depth);
+            for (int i=0;i<myPossibleMoves.size();i++){
+            int valor_n=min_max(Primero,depth,true);
+            if(valor<valor_n){
+                valor=valor_n;
+                num_move=i;
+            }
+        }
+        return myPossibleMoves.get(num_move);
         }else{
             return null;
         }
     }
     
-    //No funciona
-    public Point Min_Max(ArrayList<Point> movimientos, int[][] tablero_actual){
-        int enemymark=3-myMark;
-        
-        ArrayList<int [][]> tableros= new ArrayList<>();
-        int movimiento_ret=0;
-        
-        for (int i=0;i<movimientos.size()-1;i++){
-            tableros.add(BoardHelper.getNewBoardAfterMove(tablero_actual, movimientos.get(i), myMark));
-        }
-        int puntos_yo=-9999;
-        for (int i=0;i<tableros.size()-1;i++){
-            ArrayList<Point> movimientos_enemigo = BoardHelper.getAllPossibleMoves(tableros.get(i),enemymark );
-            for (int j=0;j<movimientos_enemigo.size()-1;j++){         
-                int [][] tablero_enemigo = BoardHelper.getNewBoardAfterMove(tableros.get(i),movimientos_enemigo.get(j),enemymark);
-                ArrayList<Point> movimientos_2 = BoardHelper.getAllPossibleMoves(tablero_enemigo, myMark);
-                for (int k=0;k<movimientos_2.size()-1;k++){
-                    int[][] tablero_2= BoardHelper.getNewBoardAfterMove(tablero_enemigo, movimientos_2.get(k), myMark);
-                    int puntos_ahora=BoardHelper.getPlayerStoneCount(tablero_2, myMark);
-                    if(puntos_ahora>=puntos_yo){
-                        puntos_yo=puntos_ahora;
-                        movimiento_ret=i;                        
-                    }
-                }
-            } 
-        }
-        return movimientos.get(movimiento_ret); 
-    }
+    //Nueva Función que funciona
+   public int min_max(Node nodo,int depth,boolean maximizo ){
+       if(depth==0||nodo.isfinal()){
+           int to_ret=nodo.evaluacion(myMark)-nodo.evaluacion(3-myMark);
+           return to_ret;
+       }
+       
+       if(maximizo){
+           int valor=-99999;
+           ArrayList<Node> hijos = nodo.generateChildren();
+           for (int i=0;i<hijos.size()-1;i++){
+               valor = Math.max(valor, min_max(hijos.get(i),depth-1,false));               
+           }
+           return valor;
+       }
+       else{//Minimizando
+           int valor=+99999;
+           ArrayList<Node> hijos = nodo.generateChildren();
+           for (int i=0;i<hijos.size()-1;i++){
+               valor = Math.min(valor, min_max(nodo,depth-1,true));               
+           }
+           return valor;
+           
+           
+       }
+       
+   }
             
     public int evaluacion(Point movimiento,int [][] board){
        int [][] newBoard = BoardHelper.getNewBoardAfterMove(board,movimiento,this.myMark);
@@ -82,90 +130,5 @@ public class MiniMaxPlayer extends GamePlayer {
         return points;
     }   
     
-    public void Generacion_01(int i, ArrayList<Point> movimientos_enemigo, ArrayList<int [][]> tableros, int enemymark) {
-    movimientos_enemigo = BoardHelper.getAllPossibleMoves(tableros.get(i),enemymark );
-    }
-    
-    public void Generacion_02(int i, int j, int [][] tablero_enemigo, ArrayList<int [][]> tableros, ArrayList<Point> movimientos_enemigo, int enemymark, ArrayList<Point> movimientos_2, int myMark){
-    tablero_enemigo = BoardHelper.getNewBoardAfterMove(tableros.get(i),movimientos_enemigo.get(j),enemymark);
-    movimientos_2 = BoardHelper.getAllPossibleMoves(tablero_enemigo, myMark);
-    }
-    
-    public void Generacion_03(int i, int k, int[][] tablero_2, int [][] tablero_enemigo, ArrayList<Point> movimientos_2, int myMark, int puntos_ahora, int puntos_yo, int movimiento_ret) {
-    tablero_2 = BoardHelper.getNewBoardAfterMove(tablero_enemigo, movimientos_2.get(k), myMark);
-    puntos_ahora = BoardHelper.getPlayerStoneCount(tablero_2, myMark);
-    if (puntos_ahora >= puntos_yo) {
-        puntos_yo = puntos_ahora;
-        movimiento_ret = i;
-    }
-}
-    
-    public Point Min_Max(ArrayList<Point> movimientos, int[][] tablero_actual, int depth){
-    int enemymark=3-myMark;
-
-    ArrayList<int [][]> tableros= new ArrayList<>();
-    int movimiento_ret=0;
-    
-    for (int i=0;i<movimientos.size()-1;i++){
-        tableros.add(BoardHelper.getNewBoardAfterMove(tablero_actual, movimientos.get(i), myMark));
-    }
-    int puntos_yo=-9999;
-
-    ArrayList<Point> movimientos_enemigo= new ArrayList<>();
-    int [][] tablero_enemigo= new int [8][8];
-    ArrayList<Point> movimientos_2= new ArrayList<>();
-    int[][] tablero_2=new int [8][8];
-    int puntos_ahora=0;
-
-    for(int l=0;l<depth;l++){
-        for(int i=0;i<movimientos.size()-1;i++){
-            if(l%2==0){int lol=0;}
-            else{
-                if(l%3==0){int lol=0;}
-                else{
-                    Generacion_01(i, movimientos_enemigo, tableros, myMark);
-                }
-            }
-            for(int j=0;j<movimientos_enemigo.size()-1;j++){
-                if(l%2==0){
-                    Generacion_02(i, j, tablero_enemigo, tableros, movimientos_enemigo, myMark, movimientos_2, enemymark);
-                }
-                for(int k=0;k<movimientos_2.size()-1;k++){
-                    if(l%2==0){int lol=0;}
-                    else{
-                        if(l%3==0){
-                            Generacion_03(i, k, tablero_2, tablero_enemigo, movimientos_2, enemymark, puntos_ahora, puntos_yo, movimiento_ret);
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    return movimientos.get(movimiento_ret);
-}
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+      
 }
