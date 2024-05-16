@@ -4,22 +4,22 @@
  */
 package player;
 
-import game.*;
+import game.BoardHelper;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  *
  * @author gabri
  */
 
-class Node1 {
+class Node2 {
     protected int[][] board;
     protected int jugador;
     protected boolean finAl;
 
-    public Node1(int[][] board, int playerToMove) {
+    public Node2(int[][] board, int playerToMove) {
         this.board = board;
         this.jugador = playerToMove;
         if (BoardHelper.isGameFinished(board))this.finAl=true;
@@ -30,11 +30,11 @@ class Node1 {
      * Funcion generadora de nodos hijos
      * @return Lista de nodos hijos
      */
-    public ArrayList<Node1> generateChildren() {
-        ArrayList<Node1> children = new ArrayList<>();
+    public ArrayList<Node2> generateChildren() {
+        ArrayList<Node2> children = new ArrayList<>();
         for (Point move : BoardHelper.getAllPossibleMoves(board, jugador)) {
             int[][] newBoard = BoardHelper.getNewBoardAfterMove(board, move, jugador);
-            children.add(new Node1(newBoard, 3 - jugador)); // Cambio de jugador
+            children.add(new Node2(newBoard, 3 - jugador)); // Cambio de jugador
         }
         return children;
     }
@@ -85,10 +85,10 @@ class Node1 {
         return 10;
     }
 }
-public class MiniMaxImprovedPlayer extends GamePlayer {
+public class AlfaBetaPlayer extends GamePlayer {
     private Point best_move;
 
-    public MiniMaxImprovedPlayer (int mark, int depth){
+    public AlfaBetaPlayer (int mark, int depth){
         super(mark, depth);
         best_move=null;
     }
@@ -103,18 +103,18 @@ public class MiniMaxImprovedPlayer extends GamePlayer {
 
     @Override
     public String playerName() {
-        return "MinMaxImprovedCPU";
+        return "AlfaBetaCPU";
     }
 
     @Override
     public Point play(int[][] board) {
         ArrayList<Point> myPossibleMoves = BoardHelper.getAllPossibleMoves(board,myMark);
-        Node1 Primero = new Node1(board,myMark);
+        Node2 Primero = new Node2(board,myMark);
         int num_move=0;
         int minimo=Integer.MAX_VALUE;
         if(myPossibleMoves.size() > 0){
             for (int i=0;i<myPossibleMoves.size();i++){
-                int valor=min_max(Primero,depth,false);
+                int valor=alfa_beta(Primero, depth, (int)Double.NEGATIVE_INFINITY, (int)Double.POSITIVE_INFINITY,false);
                 if(minimo<valor){
                     minimo=valor;
                     num_move=i;
@@ -126,26 +126,28 @@ public class MiniMaxImprovedPlayer extends GamePlayer {
         }
     }
 
-    public int min_max(Node1 nodo, int depth, boolean maximizo ){
+    public int alfa_beta(Node2 nodo,int depth,int alfa,int beta,boolean maximizo ){
         if(depth==0||nodo.isfinal()){
-            int to_ret=nodo.evaluacion(myMark)-nodo.evaluacion(3-myMark);
+            int to_ret=nodo.evaluacion(myMark);
             return to_ret;
         }
 
         if(maximizo){
-            int valor=(int)Double.NEGATIVE_INFINITY;
-            ArrayList<Node1> hijos = nodo.generateChildren();
+            ArrayList<Node2> hijos = nodo.generateChildren();
             for (int i=0;i<hijos.size()-1;i++){
-                valor = Math.max(valor, min_max(hijos.get(i),depth-1,false));
+                alfa = Math.max(alfa, alfa_beta(hijos.get(i),depth-1,alfa,beta,false));
+                if(alfa>=beta) break;
             }
-            return valor;
-        } else {//Minimizando
-            int valor=(int)Double.POSITIVE_INFINITY;
-            ArrayList<Node1> hijos = nodo.generateChildren();
-            for (int i=0;i<hijos.size()-1;i++){
-                valor = Math.min(valor, min_max(nodo,depth-1,true));
-            }
-            return valor;
+
+            return alfa;
         }
+        else{//Minimizando
+            ArrayList<Node2> hijos = nodo.generateChildren();
+            for (int i=0;i<hijos.size()-1;i++){
+                beta = Math.min(beta, alfa_beta(nodo,depth-1,alfa,beta,true));
+            }
+            return beta;
+        }
+
     }
 }
