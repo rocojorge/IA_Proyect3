@@ -15,13 +15,13 @@ import java.math.*;
  * @author gabri
  */
 
-class Node1 {
+class Node {
     protected int[][] board;
     protected int jugador;
     protected boolean finAl;
     protected int[][] board_padre;
 
-    public Node1(int[][] board, int playerToMove) {
+    public Node(int[][] board, int playerToMove) {
         this.board = board;
         this.jugador = playerToMove;
         if (BoardHelper.isGameFinished(board))this.finAl=true;
@@ -29,7 +29,7 @@ class Node1 {
        
     }
     
-    public Node1(int[][] board, int playerToMove, int[][] board_father){
+    public Node(int[][] board, int playerToMove, int[][] board_father){
         this.board = board;
         this.jugador = playerToMove;
         if (BoardHelper.isGameFinished(board))this.finAl=true;
@@ -40,11 +40,11 @@ class Node1 {
      * Funcion generadora de nodos hijos
      * @return Lista de nodos hijos
      */
-    public ArrayList<Node1> generateChildren() {
-        ArrayList<Node1> children = new ArrayList<>();
+    public ArrayList<Node> generateChildren() {
+        ArrayList<Node> children = new ArrayList<>();
         for (Point move : BoardHelper.getAllPossibleMoves(board, jugador)) {
             int[][] newBoard = BoardHelper.getNewBoardAfterMove(board, move, jugador);
-            children.add(new Node1(newBoard, 3 - jugador,this.board)); // Cambio de jugador
+            children.add(new Node(newBoard, 3 - jugador,this.board)); // Cambio de jugador
         }
         return children;
     }
@@ -79,10 +79,10 @@ class Node1 {
         return to_ret;//Heurística, apoyando tener mas fichas y el robo de movimientos.
     }
 }
-public class MiniMaxImprovedPlayer extends GamePlayer {
+public class AlphaBetaPlayer extends GamePlayer {
     private Point best_move;
     
-    public MiniMaxImprovedPlayer (int mark, int depth){
+    public AlphaBetaPlayer (int mark, int depth){
         super(mark, depth);
         best_move=null;
     }
@@ -98,20 +98,20 @@ public class MiniMaxImprovedPlayer extends GamePlayer {
 
     @Override
     public String playerName() {
-        return "MinMaxImprovedCPU";
+        return "AlphaBetaXDCPU";
     }
 
     @Override
     public Point play(int[][] board) {
         ArrayList<Point> myPossibleMoves = BoardHelper.getAllPossibleMoves(board,myMark);
-        Node1 Primero = new Node1(board,myMark,board);
+        Node Primero = new Node(board,myMark,board);
         int num_move=0;
         int valor=-9999;
         
 
         if(myPossibleMoves.size() > 0){
             for (int i=0;i<myPossibleMoves.size();i++){
-            int valor_n=min_max(Primero,depth,true);
+            int valor_n=alfa_beta(Primero,depth,-99999,99999,true);
             if(valor<valor_n){
                 valor=valor_n;
                 num_move=i;
@@ -124,7 +124,33 @@ public class MiniMaxImprovedPlayer extends GamePlayer {
     }
     
     //Nueva Función que funciona
-   public int min_max(Node1 nodo,int depth,boolean maximizo ){
+   public int min_max(Node nodo,int depth,boolean maximizo ){
+       if(depth==0||nodo.isfinal()){
+           int to_ret=nodo.evaluacion(myMark);
+           
+           return to_ret;
+       }
+       
+       if(maximizo){
+           int valor=(-9999999);
+           ArrayList<Node> hijos = nodo.generateChildren();
+           for (int i=0;i<hijos.size()-1;i++){
+               valor = Math.max(valor, min_max(hijos.get(i),depth-1,false));               
+           }
+           return valor;
+       }
+       else{//Minimizando
+           int valor=(9999999);
+           ArrayList<Node> hijos = nodo.generateChildren();
+           for (int i=0;i<hijos.size()-1;i++){
+               valor = Math.min(valor, min_max(nodo,depth-1,true));               
+           }
+           return valor;   
+       }
+       
+   }
+   
+   public int alfa_beta(Node nodo,int depth,int alfa,int beta,boolean maximizo ){
        if(depth==0||nodo.isfinal()){
            int to_ret=nodo.evaluacion(myMark);
            
@@ -133,23 +159,25 @@ public class MiniMaxImprovedPlayer extends GamePlayer {
        
        if(maximizo){
            
-           ArrayList<Node1> hijos = nodo.generateChildren();
-           int valor=(-9999999);
+           ArrayList<Node> hijos = nodo.generateChildren();
            for (int i=0;i<hijos.size()-1;i++){
-               valor = Math.max(valor, min_max(hijos.get(i),depth-1,false));               
+               alfa = Math.max(alfa, alfa_beta(hijos.get(i),depth-1,alfa,beta,false));  
+               if(alfa>=beta) break;
            }
-           return valor;
+           
+           return alfa;
        }
        else{//Minimizando
-           int valor=(999999);
-           ArrayList<Node1> hijos = nodo.generateChildren();
+           ArrayList<Node> hijos = nodo.generateChildren();
            for (int i=0;i<hijos.size()-1;i++){
-               valor = Math.min(valor, min_max(nodo,depth-1,true));               
+               beta = Math.min(beta, alfa_beta(nodo,depth-1,alfa,beta,true));               
            }
-           return valor;   
+           return beta;   
        }
        
    }
+   
+   
             
     public int evaluacion(Point movimiento,int [][] board){
        int [][] newBoard = BoardHelper.getNewBoardAfterMove(board,movimiento,this.myMark);
