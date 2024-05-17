@@ -57,6 +57,10 @@ class Node2 {
 
         int misNumMoves = BoardHelper.getAllPossibleMoves(board, jugador_).size();
         int numMovesTotales = misNumMoves + BoardHelper.getAllPossibleMoves(board, 3-jugador_).size();
+        
+        if(fichasTotales==0||numMovesTotales==0){
+            return 10;
+        }
 
         if(((misFichas/fichasTotales*100)>=100) && ((misNumMoves/numMovesTotales*100)>=100)){
             return 1;
