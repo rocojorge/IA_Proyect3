@@ -149,6 +149,7 @@ public class AlfaBetaPlayer extends GamePlayer {
             ArrayList<Node2> hijos = nodo.generateChildren();
             for (int i=0;i<hijos.size()-1;i++){
                 beta = Math.min(beta, alfa_beta(nodo,depth-1,alfa,beta,true));
+                if(alfa>=beta) break;
             }
             return beta;
         }
